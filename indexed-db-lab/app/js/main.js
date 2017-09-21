@@ -17,14 +17,120 @@ var idbApp = (function() {
   'use strict';
 
   // TODO 2 - check for support
-
-  var dbPromise;
+  if (!('indexedDB' in window )) {
+    console.log('this browser deso not support indexedDB');
+    return;
+  }
 
   // TODO 3.2 - create an object store
+  var dbPromise = idb.open('couches-n-things', 5, function(upgradeDb) {
+  switch (upgradeDb.oldVersion) {
+    case 0:
+      // a placeholder case so that the switch block will
+      // execute when the database is first created
+      // (oldVersion is 0)
+    case 1:
+      console.log('Creating the products object store');
+      upgradeDb.createObjectStore('products', {keyPath: 'id'});
+
+    // TODO 4.1 - create 'name' index
+    case 2:
+      console.log('Creating a name index');
+      var store = upgradeDb.transaction.objectStore('products');
+      store.createIndex('name', 'name', {unique: true});
+
+    // TODO 4.2 - create 'price' and 'description' indexes
+     case 3:
+      console.log('Creating a price index and description indexes');
+      var store = upgradeDb.transaction.objectStore('products');
+      store.createIndex('price', 'price');
+      store.createIndex('description', 'description');
+
+    // TODO 5.1 - create an 'orders' object store
+    case 4:
+     console.log('Creating orders object store');
+     var store = upgradeDb.transaction.objectStore('orders');
+     store.createObjectStore('orders',{keyPath:'id'});
+  }
+});
+
 
   function addProducts() {
 
     // TODO 3.3 - add objects to the products store
+    dbPromise.then(function(db) {
+        var tx = db.transaction('products', 'readwrite');
+        var store = tx.objectStore('products');
+
+        var items = [
+          {
+            name: 'Couch',
+            id: 'cch-blk-ma',
+            price: 499.99,
+            color: 'black',
+            material: 'mahogany',
+            description: 'A very comfy couch',
+            quantity: 3
+          },
+          {
+            name: 'Armchair',
+            id: 'ac-gr-pin',
+            price: 299.99,
+            color: 'grey',
+            material: 'pine',
+            description: 'A plush recliner armchair',
+            quantity: 7
+          },
+          {
+            name: 'Stool',
+            id: 'st-re-pin',
+            price: 59.99,
+            color: 'red',
+            material: 'pine',
+            description: 'A light, high-stool',
+            quantity: 3
+          },
+          {
+            name: 'Chair',
+            id: 'ch-blu-pin',
+            price: 49.99,
+            color: 'blue',
+            material: 'pine',
+            description: 'A plain chair for the kitchen table',
+            quantity: 1
+          },
+          {
+            name: 'Dresser',
+            id: 'dr-wht-ply',
+            price: 399.99,
+            color: 'white',
+            material: 'plywood',
+            description: 'A plain dresser with five drawers',
+            quantity: 4
+          },
+          {
+            name: 'Cabinet',
+            id: 'ca-brn-ma',
+            price: 799.99,
+            color: 'brown',
+            material: 'mahogany',
+            description: 'An intricately-designed, antique cabinet',
+            quantity: 11
+          }
+        ];
+
+        items.forEach(function(item) {
+          console.log('Adding item: ', item);
+          store.add(item);
+        });
+
+        return tx.complete;
+      }).then(function() {
+        console.log('All items added successfully!');
+      }).catch(function(e) {
+        console.log('Error adding items: ', e);
+      });
+
 
   }
 
@@ -32,12 +138,20 @@ var idbApp = (function() {
 
     // TODO 4.3 - use the get method to get an object by name
 
+    return dbPromise.then(function(db) {
+      var tx = db.transaction('products', 'readonly');
+      var store = tx.objectStore('products');
+      var index = store.index('name');
+      return index.get(key);
+    })
+
   }
 
   function displayByName() {
     var key = document.getElementById('name').value;
     if (key === '') {return;}
     var s = '';
+    // getByName
     getByName(key).then(function(object) {
       if (!object) {return;}
 
@@ -56,6 +170,53 @@ var idbApp = (function() {
   function getByPrice() {
 
     // TODO 4.4a - use a cursor to get objects by price
+    var lower = document.getElementById('priceLower').value;
+    var upper = document.getElementById('priceUpper').value;
+    /*
+    var lowerNum = Number(document.getElementById('priceLower').value);
+    var upperNum = Number(document.getElementById('priceUpper').value);
+    */
+    var lowerNum = Number(lower);
+    var upperNum = Number(upper);
+
+    /* determine which method to call on IDBKeyRange to limit the cursor.
+    * We open the cursor on the price index and pass the cursor object
+    * to the showRange
+    */
+    if (lower === '' && upper === '') {return;}
+    if (lower > upper){
+      s = '<p> Sorry, refine your search criteria, lower price is higher than upper price! </p>';
+      document.getElementById('results').innerHTML = s;
+      return;
+    }
+    var range;
+    if (lower !== '' && upper !== '') {
+      range = IDBKeyRange.bound(lowerNum, upperNum);
+    } else if (lower === '') {
+      range = IDBKeyRange.upperBound(upperNum);
+    } else {
+      range = IDBKeyRange.lowerBound(lowerNum);
+    }
+    var s = '';
+    dbPromise.then(function(db) {
+      var tx = db.transaction('products', 'readonly');
+      var store = tx.objectStore('products');
+      var index = store.index('price');
+      return index.openCursor(range);
+    }).then(function showRange(cursor) {
+      if (!cursor) {return;} // return when no more object
+      console.log('Cursored at:', cursor.value.name);
+      s += '<h2>Price - ' + cursor.value.price + '</h2><p>';
+      // scan all field of the cursor.value
+      for (var field in cursor.value) {
+        s += field + ' = ' + cursor.value[field] + '<br/>';
+      }
+      s += '</p>';
+      return cursor.continue().then(showRange);
+    }).then(function() {
+      if (s === '') {s = '<p>No results.</p>';}
+      document.getElementById('results').innerHTML = s;
+    });
 
   }
 
@@ -67,6 +228,20 @@ var idbApp = (function() {
     dbPromise.then(function(db) {
 
       // TODO 4.4b - get items by their description
+      var tx = db.transaction('products', 'readonly');
+      var store = tx.objectStore('products');
+      var index = store.index('description');
+      return index.openCursor(range);
+    }).then(function showDescription(cursor){
+      if (!cursor) {return;}
+      console.log('Cursored at:',cursor.value.name);
+      s += '<h2>Description -' + cursor.value.description + '</h2>';
+      // scan all the field of the cursor.value
+      for ( var field in cursor.value) {
+        s += field + ' = ' + cursor.value[field] + '</br>' ;
+      }
+      s += '</p>';
+      return cursor.continue().then(showDescription);
 
     }).then(function() {
       if (s === '') {s = '<p>No results.</p>';}
