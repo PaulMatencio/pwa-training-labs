@@ -49,8 +49,8 @@ var idbApp = (function() {
     // TODO 5.1 - create an 'orders' object store
     case 4:
      console.log('Creating orders object store');
-     var store = upgradeDb.transaction.objectStore('orders');
-     store.createObjectStore('orders',{keyPath:'id'});
+     upgradeDb.createObjectStore('orders',{keyPath:'id'});
+
   }
 });
 
@@ -120,18 +120,16 @@ var idbApp = (function() {
         ];
 
         items.forEach(function(item) {
-          console.log('Adding item: ', item);
+          console.log('Adding product: ', item);
           store.add(item);
         });
 
         return tx.complete;
       }).then(function() {
-        console.log('All items added successfully!');
+        console.log('All products added successfully!');
       }).catch(function(e) {
-        console.log('Error adding items: ', e);
+        console.log('Error adding products: ', e);
       });
-
-
   }
 
   function getByName(key) {
@@ -252,14 +250,69 @@ var idbApp = (function() {
   function addOrders() {
 
     // TODO 5.2 - add items to the 'orders' object store
+    dbPromise.then(db => {
+      var tx = db.transaction('orders','readwrite');
+      var store = tx.objectStore('orders');
+      var items = [
+        {
+          name: 'Cabinet',
+          id: 'ca-brn-ma',
+          price: 799.99,
+          color: 'brown',
+          material: 'mahogany',
+          description: 'An intricately-designed, antique cabinet',
+          quantity: 7
+        },
+        {
+          name: 'Armchair',
+          id: 'ac-gr-pin',
+          price: 299.99,
+          color: 'grey',
+          material: 'pine',
+          description: 'A plush recliner armchair',
+          quantity: 3
+        },
+        {
+          name: 'Couch',
+          id: 'cch-blk-ma',
+          price: 499.99,
+          color: 'black',
+          material: 'mahogany',
+          description: 'A very comfy couch',
+          quantity: 3
+        }
+      ];
+      items.forEach(item => {
+        console.log("adding order",item)
+        store.add(item);
+      })
+      return tx.complete;
 
+    }).then(function() {
+      console.log("all orders are added successfully")
+    }).catch(function(e){
+      console.log("Error adding orders",e)
+    })
   }
 
   function showOrders() {
     var s = '';
-    dbPromise.then(function(db) {
+    dbPromise.then(db =>  {
 
       // TODO 5.3 - use a cursor to display the orders on the page
+      var tx = db.transaction('orders','readonly');
+      var store = tx.objectStore('orders');
+      return store.openCursor();
+    }).then(function showOrder(cursor){
+        if (!cursor) {return;}
+        console.log('Cursored at:',cursor.value.name);
+        s += '<h2>Description -' + cursor.value.description + '</h2>';
+        // scan all the field of the cursor.value
+        for ( var field in cursor.value) {
+          s += field + ' = ' + cursor.value[field] + '</br>' ;
+        }
+        s += '</p>';
+        return cursor.continue().then(showOrder);
 
     }).then(function() {
       if (s === '') {s = '<p>No results.</p>';}
@@ -271,10 +324,15 @@ var idbApp = (function() {
 
     // TODO 5.4 - get all objects from 'orders' object store
 
+    return dbPromise.then( db => {
+      var tx = db.transaction('orders','readonly');
+      var store = tx.objectStore('orders');
+      return store.getAll();
+    });
   }
 
   function fulfillOrders() {
-    getOrders().then(function(orders) {
+    getOrders().then(orders =>  {
       return processOrders(orders);
     }).then(function(updatedProducts) {
       updateProductsStore(updatedProducts);
@@ -285,19 +343,48 @@ var idbApp = (function() {
 
     // TODO 5.5 - get items in the 'products' store matching the orders
 
+    return dbPromise.then(function(db) {
+      var tx = db.transaction('products');
+      var store = tx.objectStore('products');
+      return Promise.all(
+        orders.map(function(order) {
+          return store.get(order.id).then(function(product) {
+            return decrementQuantity(product, order);
+          });
+        })
+      );
+    });
+
   }
 
   function decrementQuantity(product, order) {
 
     // TODO 5.6 - check the quantity of remaining products
+    return new Promise(function(resolve, reject) {
+      var item = product;
+      var qtyRemaining = item.quantity - order.quantity;
+      if (qtyRemaining < 0) {
+        console.log('Not enough ' + product.id + ' left in stock!');
+        document.getElementById('receipt').innerHTML =
+        '<h3>Not enough ' + product.id + ' left in stock!</h3>';
+        throw 'Out of stock!';
+      }
+      item.quantity = qtyRemaining;
+      resolve(item);
+    });
 
   }
 
   function updateProductsStore(products) {
     dbPromise.then(function(db) {
-
       // TODO 5.7 - update the items in the 'products' object store
-
+      var tx = db.transaction('products','readwrite');
+      var store = tx.objectStore('products');
+      products.forEach(function(item) {
+          console.log("updating  item ",item)
+          store.put(item);
+      });
+      return tx.complete
     }).then(function() {
       console.log('Orders processed successfully!');
       document.getElementById('receipt').innerHTML =
