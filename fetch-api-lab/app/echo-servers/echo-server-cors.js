@@ -6,7 +6,7 @@ http.createServer(function(request, response) {
   // enable CORS
   response.setHeader('Access-Control-Allow-Origin', '*');
   response.setHeader('Access-Control-Allow-Methods', 'POST, GET, OPTIONS');
-  response.setHeader('Access-Control-Allow-Headers', 'X-CUSTOM, Content-Type');
+  response.setHeader('Access-Control-Allow-Headers', 'X-CUSTOM, X-USERMD, Content-Type');
 
   request.on('data', function(message) {
     // echo back request with headers
@@ -16,7 +16,7 @@ http.createServer(function(request, response) {
     response.writeHead(200, {'Content-Type': 'text/plain'});
     response.write(responseWithHeaders);
     response.end();
-    console.log(responseWithHeaders);
+    console.log("server=>",responseWithHeaders);
   });
 
   request.on('end', function() {

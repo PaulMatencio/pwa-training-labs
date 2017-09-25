@@ -1,18 +1,3 @@
-/*
-Copyright 2016 Google Inc.
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
 var app = (function() {
   'use strict';
 
@@ -24,60 +9,122 @@ var app = (function() {
     console.log('Looks like there was a problem: \n', error);
   }
 
-  // TODO 2.1a
+
+  if (!('fetch' in window)) {
+    console.log('Fetch API not found, try including the polyfill');
+    return;
+  }
 
   function fetchJSON() {
-    // TODO 2.1b
+    // fetch fresh data
+    fetch('examples/animals.json')
+    .then(validateResponse)
+    .then(readResponseAsJSON)
+    .then(logResult)
+    .catch(logError)
+
   }
 
   function validateResponse(response) {
-    // TODO 2.3
+
+    if (!response.ok) {
+      throw(response.statusText);
+    } else return response;
   }
 
   function readResponseAsJSON(response) {
-    // TODO 2.4
+
+    return response.json();
   }
 
   function showImage(responseAsBlob) {
-    //  TODO 3a
+    var container = document.getElementById('container');
+    var imgElem = document.createElement('img');
+    container.appendChild(imgElem);
+    var imgUrl = URL.createObjectURL(responseAsBlob);
+    imgElem.src = imgUrl;
   }
 
   function readResponseAsBlob(response) {
-    // TODO 3b
+
+    return response.blob();
   }
 
   function fetchImage() {
-    // TODO 3c
+    fetch('examples/kitten.jpg')
+    .then(validateResponse)
+    .then(readResponseAsBlob)
+    .then(showImage)
+    .catch(logError)
   }
 
   function showText(responseAsText) {
-    //  TODO 4a
+    var message = document.getElementById('message');
+    console.log(responseAsText);
+    message.textContent = responseAsText;
   }
 
   function readResponseAsText(response) {
-    // TODO 4b
+
+    console.log(response);
+    return response.text();
   }
 
   function fetchText() {
-    // TODO 4c
+
+    fetch('examples/words.txt')
+    .then(validateResponse)
+    .then(readResponseAsText)
+    .then(showText)
+    .catch(logError)
+  }
+
+
+  function readHeaderContentLength(response) {
+    return response.headers.get('Content-Length') ;
   }
 
   function headRequest() {
-    // TODO 5.1
+
+    fetch('examples/words.txt',{
+      'method': 'HEAD'
+    })
+    .then(validateResponse)
+    .then(getSize)
+    .then(logResult)
+    .catch(logError)
   }
 
-  function logSize(response) {
-    // TODO 5.2
+  function getSize(response) {
+    return response.headers.get('Content-Length') ;
   }
 
   /* NOTE: Never send unencrypted user credentials in production! */
   function postRequest() {
-    // TODO 6.2
+    var formData = new FormData(document.getElementById('myForm'));
+    for (var pair of  formData.entries()){
+      console.log(pair[0] + ':' + pair[1]);
+    }
+    var headers = new Headers();
+    var init = {
+      method : 'POST',
+      mode: 'cors',
+      body: formData,
+      headers: customHeaders
+    }
+    fetch('http://localhost:5000/', init)
+    .then(validateResponse)
+    .then(readResponseAsText)
+    .then(logResult)
+    .catch(logError)
   }
 
-  // Don't worry if you don't understand this, it's not part of the Fetch API.
-  // We are using the JavaScript Module Pattern to enable unit testing of
-  // our functions.
+  var customHeaders = new Headers({
+    'Content-Type': 'text/plain',
+    'X-Custom': 'hello world',
+    'X-Usermd': 'some user metadata'
+  });
+
   return {
     readResponseAsJSON: (readResponseAsJSON),
     readResponseAsBlob: (readResponseAsBlob),

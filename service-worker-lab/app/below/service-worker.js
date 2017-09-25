@@ -18,7 +18,7 @@ limitations under the License.
   console.log(self);
   // TODO - 3.1: Add install and activate event listeners
   self.addEventListener('install', function(event) {
-    console.log('Service worker installing...');
+    console.log('Service worker below installing...');
     // TODO 3.4: Skip waiting to active immediately the new service worker
     self.skipWaiting();
   });
@@ -29,8 +29,8 @@ limitations under the License.
   *   or must be unregistered
   */
   self.addEventListener('activate', function(event) {
-    console.log('Service worker activating...');
-    console.log('I am the New service worker')
+    console.log('Service worker below activating...');
+    console.log('I am the New service worker'):
   });
 
 
@@ -39,6 +39,7 @@ limitations under the License.
   // TODO - 4: Add fetch listener
   self.addEventListener('fetch', function(event) {
     console.log('Fetching:', event.request.url);
+    //  Cache API or indexedDB API can be called from here 
   });
 
 })();
