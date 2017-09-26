@@ -9,6 +9,7 @@
     'js/register.js'
   ];
   /*
+   These assets will be dynamiaclly put in cache
   'examples/animals.json',
   'examples/kitten.jpg',
   'examples/words.txt'
@@ -19,6 +20,7 @@
   }
 
   var staticCacheName = 'pages-cache-v1';
+
   self.addEventListener('install', function(event) {
     console.log('Service worker below installing...');
     /*
@@ -40,23 +42,38 @@
   self.addEventListener('activate', function(event) {
     console.log('Service worker below activating...');
     /*
-    *   Update Cache should be done
+    *   Update Cache are  done  when service worker is activated
     */
   });
 
   self.addEventListener('fetch', function(event) {
+  if (event.request.method !==  'GET') {return;}  ;
+  var url = new URL(event.request.url);
+  /*  */
+  if (url.pathname.substr(0,13) === '/app/examples') {
+      event.respondWith(
+        caches.open('mysite-dynamic').then(function(cache) {
+          return fetch(event.request).then(function(response) {
+            console.log(`Put ${url} in cache and return the data to the caller`);
+            cache.put(event.request, response.clone());
+            return response;
+          });
+        })
+      );
+  } else {
     event.respondWith(
-    // Try the cache
+      // Try the cache
       caches.match(event.request).then(function(response) {
+        var url  = event.request.url;
         if (response) {
-          console.log("get from cache");
+          console.log(`get ${url} from cache`);
           return response;
         }
         return fetch(event.request).then(function(response) {
           if (response.status === 404) {
             return caches.match('pages/404.html');
           }
-          console.log("get from network");
+          console.log(`get ${url} from the backend`);
           return response
         });
       }).catch(function() {
@@ -64,6 +81,7 @@
         return caches.match('/offline.html');
       })
     );
-  });
+  }
+});
 
 })();

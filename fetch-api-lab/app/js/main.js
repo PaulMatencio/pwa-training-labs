@@ -26,14 +26,12 @@ var app = (function() {
   }
 
   function validateResponse(response) {
-
     if (!response.ok) {
       throw(response.statusText);
     } else return response;
   }
 
   function readResponseAsJSON(response) {
-
     return response.json();
   }
 
@@ -46,17 +44,41 @@ var app = (function() {
   }
 
   function readResponseAsBlob(response) {
-
     return response.blob();
   }
 
   function fetchImage() {
-    fetch('examples/kitten.jpg')
-    .then(validateResponse)
-    .then(readResponseAsBlob)
-    .then(showImage)
-    .catch(logError)
+    var backend = false;
+    var url = 'examples/kitten.jpg';
+    // fetch data from backend
+    var backendImage =
+      fetch(url)
+      .then(validateResponse)
+      .then(function(response){
+        backend = true;
+        return response.blob();
+      })
+      .then(showImage)
+      .catch(logError) ;
+     // fetch  data from cache
+    caches.match(url)
+    .then(function(response) {
+       if (!response) throw Error(`No cache data for ${url}`);
+       return response.blob();
+    })
+    .then(function(data){
+      if (!backend) {
+        console.log(`Show image ${data} from cache`);
+        showImage(data);
+      }
+    })
+    .catch(function(){
+        return backendImage;
+    })
+    .catch(logError);
   }
+
+
 
   function showText(responseAsText) {
     var message = document.getElementById('message');
@@ -124,6 +146,11 @@ var app = (function() {
     'X-Custom': 'hello world',
     'X-Usermd': 'some user metadata'
   });
+
+  /* open the dynamic cache */
+caches.open('mysite-dynamic').then(function(cache) {
+    console.log(cache);
+});
 
   return {
     readResponseAsJSON: (readResponseAsJSON),
