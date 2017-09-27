@@ -6,14 +6,32 @@
     'index.html',
     'pages/404.html',
     'js/main.js',
-    'js/register.js'
+    'js/register.js',
+    'js/idb.js'
   ];
+  var dbPromise;
   /*
    These assets will be dynamiaclly put in cache
   'examples/animals.json',
   'examples/kitten.jpg',
   'examples/words.txt'
   */
+  function createDB() {
+    dbPromise = idb.open('edfs', 1, function(upgradeDB) {
+      var store = upgradeDB.createObjectStore('dynamic', {
+        keyPath: 'url'
+      });
+      // no need to create an index
+    });
+  }
+
+  function addUrl() {
+    dbPromise.then(function(db){
+        var tx    = db.transaction('edfs', 'readwrite');
+        var store = tx.objectStore('dynamic');
+        store.add(data)
+    })
+  }
 
   function LogeError(error){
     console.log(error);
@@ -49,8 +67,8 @@
   self.addEventListener('fetch', function(event) {
   if (event.request.method !==  'GET') {return;}  ;
   var url = new URL(event.request.url);
-  /*  */
-  if (url.pathname.substr(0,13) === '/app/examples') {
+  /* dynamic content */
+  if (url.pathname.indexOf('/examples/',0) > 0 ) {
       event.respondWith(
         caches.open('mysite-dynamic').then(function(cache) {
           return fetch(event.request).then(function(response) {
