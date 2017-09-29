@@ -16,23 +16,45 @@ limitations under the License.
 <!doctype html>
 <html lang="en">
 <head>
+  <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1.0, user-scalable=yes">
+  <meta charset="utf-8">
+  <link href="css/styles.css" rel="stylesheet">
   <script type="text/javascript" src="js/idb.js"></script>
   <script type="text/javascript" src="js/main.js"></script>
   <title>Couches-N-Things</title>
 </head>
 <body>
-  <h1>Couches-N-Things</h1>
-  <button id="addProducts" onclick="idbApp.addProducts()">Add Products</button></br></br>
-  <h2>Search Products</h2>
-  By Name: <input type="text" id="name" placeholder="Name"> <button id="byName" onclick="idbApp.displayByName()">Search</button></br></br>
-  By Price: <input type="text" id="priceLower" placeholder="Min"><input type="text" id="priceUpper" placeholder="Max"> <button id="byPrice" onclick="idbApp.getByPrice()">Search</button></br></br>
-  By Description: <input type="text" id="desc" placeholder="Description"> <button id="byDesc" onclick="idbApp.getByDesc()">Search</button></br></br>
-  <div id="results"></div>
-  <h2>Orders</h2>
-  <button id="addOrders" onclick="idbApp.addOrders()">Add Orders</button></br></br>
-  <button id="showOrders" onclick="idbApp.showOrders()">Show Orders</button></br></br>
-  <div id="orders"></div>
-  <button id="fulfill" onclick="idbApp.fulfillOrders()">Fulfill</button></br></br>
-  <div id="receipt"></div>
+  <section>
+    <h1>Couches-N-Things</h1>
+    <div class="container">
+      <button  id="addProducts" onclick="idbApp.addProducts()">Add Products</button>
+      <button id="addOrders" onclick="idbApp.addOrders()">Add Orders</button>
+      <button  id="showOrders" onclick="idbApp.showOrders()">Show Orders</button>
+      <button  id="fulfill" onclick="idbApp.fulfillOrders()">Fulfill</button>
+    </div>
+  </section>
+
+  <section>
+    <h1>Search</h1>
+    <div class="container">
+      <div class="item">
+        <label for="name">By name</label>
+        <input type="text" id="name" placeholder="Name"> <button id="byName" onclick="idbApp.displayByName()">Search</button></br></br>
+        <label for="priceLower">By price</label>
+        <input type="text" id="priceLower" placeholder="Min"><input type="text" id="priceUpper" placeholder="Max"> <button id="byPrice" onclick="idbApp.getByPrice()">Search</button></br></br>
+        <label for="desc">By description</label>
+        <input type="text" id="desc" placeholder="Description"> <button id="byDesc" onclick="idbApp.getByDesc()">Search</button></br></br>
+      </div>
+      <div class="item" id="results"></div>
+    </div>
+  </section>
+  <section>
+      <div class="container">
+        <div class="item" id="orders"></div>
+      </div>
+  </section>
+  <section>
+    <div id="receipt"></div>
+  </section>
 </body>
 </html>

@@ -16,13 +16,13 @@ limitations under the License.
 var idbApp = (function() {
   'use strict';
 
-  // TODO 2 - check for support
+
   if (!('indexedDB' in window )) {
     console.log('this browser deso not support indexedDB');
     return;
   }
 
-  // TODO 3.2 - create an object store
+
   var dbPromise = idb.open('couches-n-things', 5, function(upgradeDb) {
   switch (upgradeDb.oldVersion) {
     case 0:
@@ -33,20 +33,19 @@ var idbApp = (function() {
       console.log('Creating the products object store');
       upgradeDb.createObjectStore('products', {keyPath: 'id'});
 
-    // TODO 4.1 - create 'name' index
+
     case 2:
       console.log('Creating a name index');
       var store = upgradeDb.transaction.objectStore('products');
       store.createIndex('name', 'name', {unique: true});
 
-    // TODO 4.2 - create 'price' and 'description' indexes
+
      case 3:
       console.log('Creating a price index and description indexes');
       var store = upgradeDb.transaction.objectStore('products');
       store.createIndex('price', 'price');
       store.createIndex('description', 'description');
 
-    // TODO 5.1 - create an 'orders' object store
     case 4:
      console.log('Creating orders object store');
      upgradeDb.createObjectStore('orders',{keyPath:'id'});
@@ -57,7 +56,7 @@ var idbApp = (function() {
 
   function addProducts() {
 
-    // TODO 3.3 - add objects to the products store
+
     dbPromise.then(function(db) {
         var tx = db.transaction('products', 'readwrite');
         var store = tx.objectStore('products');
@@ -134,7 +133,7 @@ var idbApp = (function() {
 
   function getByName(key) {
 
-    // TODO 4.3 - use the get method to get an object by name
+
 
     return dbPromise.then(function(db) {
       var tx = db.transaction('products', 'readonly');
@@ -167,13 +166,10 @@ var idbApp = (function() {
 
   function getByPrice() {
 
-    // TODO 4.4a - use a cursor to get objects by price
+
     var lower = document.getElementById('priceLower').value;
     var upper = document.getElementById('priceUpper').value;
-    /*
-    var lowerNum = Number(document.getElementById('priceLower').value);
-    var upperNum = Number(document.getElementById('priceUpper').value);
-    */
+  
     var lowerNum = Number(lower);
     var upperNum = Number(upper);
 
@@ -249,7 +245,7 @@ var idbApp = (function() {
 
   function addOrders() {
 
-    // TODO 5.2 - add items to the 'orders' object store
+
     dbPromise.then(db => {
       var tx = db.transaction('orders','readwrite');
       var store = tx.objectStore('orders');
@@ -296,17 +292,15 @@ var idbApp = (function() {
   }
 
   function showOrders() {
-    var s = '';
+    var s = '<h2> Orders</h2>';
     dbPromise.then(db =>  {
-
-      // TODO 5.3 - use a cursor to display the orders on the page
       var tx = db.transaction('orders','readonly');
       var store = tx.objectStore('orders');
       return store.openCursor();
     }).then(function showOrder(cursor){
         if (!cursor) {return;}
         console.log('Cursored at:',cursor.value.name);
-        s += '<h2>Description -' + cursor.value.description + '</h2>';
+        s += '<h4>Description -' + cursor.value.description + '</h4>';
         // scan all the field of the cursor.value
         for ( var field in cursor.value) {
           s += field + ' = ' + cursor.value[field] + '</br>' ;
@@ -316,13 +310,13 @@ var idbApp = (function() {
 
     }).then(function() {
       if (s === '') {s = '<p>No results.</p>';}
-      document.getElementById('orders').innerHTML = s;
+      var orders = document.getElementById('orders');
+      orders.innerHTML = s;
+      orders.classList.add("show");
     });
   }
 
   function getOrders() {
-
-    // TODO 5.4 - get all objects from 'orders' object store
 
     return dbPromise.then( db => {
       var tx = db.transaction('orders','readonly');
